@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="./css/style.css" rel="stylesheet" </head>
+
+<body>
+    <div class="main">
+        <div class="upper">
+
+
+            <h1>The Pictionary Game- Play with Friends</h1>
+            <form action="" class="room">
+                <section class="join">
+                    <h2>Create Room</h2>
+                    <h3>Username</h3>
+                    <input type="text" id="name" placeholder="Enter Your Name"><br>
+                    <button class="btn1">Create Room</button>
+                </section>
+
+            </form>
+        </div>
+
+        <hr class="mid">
+        <div class="down">
+            <section class="lower">
+                <h2>Join Room</h2>
+                <h3>Username</h3>
+                <input type="text" id="name" placeholder="Enter Your Name"><br>
+                <h3>Room Id</h3>
+                <input type="text" id="room_id" placeholder="Enter Room ID"><br>
+                <button class="btn2">Join Room</button>
+
+            </section>
+
+        </div>
+    </div>
+    <!-- <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<script>
+  const socket = io();
+  const form = document.getElementById('form');
+  const input = document.getElementById('input');
+  form.addEventListener('submit',(e)=>{
+    e.preventDefault();
+    if(input.value){
+      socket.emit('chat message',input.value);
+      input.value = '';
+    }
+  })
+
+
+</script> -->
+</body>
+
+</html>
