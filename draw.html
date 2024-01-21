@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pictionary</title>
+    <link rel="stylesheet" href="css/style2.css">
+</head>
+<body>
+    <div class="main">
+        
+        <div class="left">
+            <div class="user_info"></div>
+            <div class="game_info">
+                <button>Start</button>
+                <button>Room ID</button>
+                <button>Leave</button>
+
+            </div>
+        </div>
+        <div class="center">
+            <div class="word"></div>
+            <div class="board">
+                <canvas style="border: solid re 3px;" id="canvas" width="900" height="430"></canvas>
+            </div>
+            <div class="brush">
+                <input type="range" id="brushSize" name="brushSize" min="1" max="50" value="10" oninput="updateBrushSize()">
+                Brush Size
+                <input type="color" id="colorPicker" name="colorPicker" value="#000000" onchange="updateColor()">
+                <button onclick="clearDrawing()">Clear Drawing</button>
+
+            </div>
+        </div>
+        <div class="right">
+            <div class="message">
+
+                <input type="text">
+                <button class="send" type="submit">Send</button>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
+
+        let isDrawing = false;
+
+        function updateColor() {
+            context.strokeStyle = document.getElementById("colorPicker").value;
+        }
+
+        function updateBrushSize() {
+            context.lineWidth = document.getElementById("brushSize").value;
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            context.beginPath();
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+
+            context.lineCap = "round";
+            context.lineJoin = "round";
+
+            context.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            context.stroke();
+            context.beginPath();
+            context.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        }
+        function clearDrawing() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        canvas.addEventListener("mousedown", startDrawing);
+        canvas.addEventListener("mouseup", stopDrawing);
+        canvas.addEventListener("mousemove", draw);
+    </script>
+</body>
+</html>
