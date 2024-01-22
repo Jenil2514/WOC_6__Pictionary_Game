@@ -1,2 +1,3 @@
 # WOC_6__nodeJs
-This is for node_js
+This is pictionary - game with multiplayer features.
+
