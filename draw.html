@@ -1,41 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pictionary</title>
     <link rel="stylesheet" href="css/style2.css">
 </head>
+
 <body>
     <div class="main">
-        
+
         <div class="left">
-            <div class="user_info"></div>
+            <div class="user_info" id="user_info"></div>
             <div class="game_info">
-                <button>Start</button>
-                <button>Room ID</button>
-                <button>Leave</button>
+                <button id ="start">Start</button>
+                <button>Room ID<p id="rid"></p></button>
+                <button id="leave">Leave</button>
 
             </div>
         </div>
         <div class="center">
-            <div class="word"></div>
+            <div class="word">
+                <h3>Word</h3>
+            </div>
             <div class="board">
                 <canvas style="border: solid re 3px;" id="canvas" width="900" height="430"></canvas>
             </div>
             <div class="brush">
-                <input type="range" id="brushSize" name="brushSize" min="1" max="50" value="10" oninput="updateBrushSize()">
+                <input type="range" id="brushSize" name="brushSize" min="1" max="50" value="10"
+                    oninput="updateBrushSize()">
                 Brush Size
                 <input type="color" id="colorPicker" name="colorPicker" value="#000000" onchange="updateColor()">
                 <button onclick="clearDrawing()">Clear Drawing</button>
 
             </div>
         </div>
-        <div class="right">
+        <div class="right" id="message">
+            <h2>Chat : </h2>
             <div class="message">
 
-                <input type="text">
-                <button class="send" type="submit">Send</button>
+
+                <input type="text" id="txt">
+                <button class="send" id="msg" type="submit">Send</button>
             </div>
         </div>
 
@@ -82,5 +89,97 @@
         canvas.addEventListener("mouseup", stopDrawing);
         canvas.addEventListener("mousemove", draw);
     </script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+
+    <script>
+        const socket = io();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username');
+        const room_id = urlParams.get('room_id');
+        const message = document.getElementById("message");
+        const btn = document.getElementById("msg");
+        const btn2 = document.getElementById("rid");
+        const leave = document.getElementById("leave");
+        const user_info = document.getElementById("user_info");
+        const start = document.getElementById("start");
+
+
+
+        socket.emit('join_room', username, room_id);
+        btn2.innerText = room_id;
+
+        btn.addEventListener('click', e => {
+            e.preventDefault();
+            const txt = document.getElementById("txt").value;
+            socket.emit('send_message', { username, txt, room_id });
+
+
+        });
+        function startGame() {
+            socket.emit('start_game', room_id);
+        }
+
+        start.addEventListener("click", e=>{
+            e.preventDefault;
+            startGame();
+        })
+
+        socket.on("receive_message", (messageData) => {
+            // Display messages sent to the specific room
+            const p = document.createElement('p');
+            p.innerText = `${messageData.username}: ${messageData.txt}`;
+            message.appendChild(p);
+        });
+        socket.on("joined_room", (udata) => {
+            console.log(udata.u_name);
+            const p = document.createElement('p');
+            p.innerText = `${udata.u_name}`;
+            user_info.appendChild(p);
+        });
+        leave.addEventListener("click", e => {
+            window.location.href = `/`;
+
+        });
+        
+
+        socket.on('word_to_drawer', ({ word, wordLength }) => {
+            document.querySelector('.guess.word').innerText = `Word Length: ${wordLength}`;
+            if (username === drawer) {
+                // Display the word to the drawer
+                document.querySelector('.guess.word').innerText = `Your Word: ${word}`;
+            }
+        });
+
+        let drawer = '';
+
+        // socket.on('game_started', () => {
+        //     // Enable the start button only for the host
+        //     const params = new URLSearchParams(window.location.search);
+        //     const isHost = params.get('isHost'); 
+        //     if (isHost === 'true') {
+        //         document.getElementById('start').disabled = false;
+        //     }
+        // });
+
+        socket.on('your_turn', (time) => {
+            // Display timer for the current player's turn
+            let timer = time / 1000;
+            const timerInterval = setInterval(() => {
+                document.querySelector('.guess.word').innerText = `Your Turn: ${timer}`;
+                timer--;
+                if (timer < 0) {
+                    clearInterval(timerInterval);
+                    document.querySelector('.guess.word').innerText = 'Time is up!';
+                }
+            }, 1000);
+        });
+
+    </script>
 </body>
+
 </html>
+
+<script>
+
+</script>
