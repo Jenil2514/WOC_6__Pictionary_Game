@@ -18,7 +18,7 @@
                     <h2>Create Room</h2>
                     <h3>Username</h3>
                     <input type="text" id="name" placeholder="Enter Your Name"><br>
-                    <button type="submit" class="btn1">Create Room</button>
+                    <button type="submit" class="btn1" id = "btn1">Create Room</button>
                 </section>
 
             </form>
@@ -28,61 +28,67 @@
         <div class="down">
             <section class="lower">
                 <h2>Join Room</h2>
-                <form action="" id="room2">
+                <form action="/join" method="post" id="room2">
                     <h3>Username</h3>
-                    <input type="text" id="name2" placeholder="Enter Your Name"><br>
+                    <input type="text" id="name2" name="name2" placeholder="Enter Your Name"><br>
                     <h3>Room Id</h3>
-                    <input type="text" id="room_id" placeholder="Enter Room ID"><br>
-                    <a href="draw.html"><button type="button" id="btn2">Join Room</button></a>
+                    <input type="text" id="room_id" name="room_id" placeholder="Enter Room ID"><br>
+                    <a href="draw.html">
+                        <button type="submit" id="btn2">Join Room</button></a>
+                </form>
 
             </section>
 
-            </form>
 
 
         </div>
         <div id="message"></div>
     </div>
-    
+
 
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
+
+        function generateRoomId(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let roomId = '';
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * characters.length);
+                roomId += characters.charAt(randomIndex);
+            }
+            return roomId;
+        }
+
+        
+
         const socket = io();
         const username = document.getElementById("name2");
+        const username2 = document.getElementById("name");
         const room_id = document.getElementById("room_id");
         const btn2 = document.getElementById("btn2");
+        const btn1 = document.getElementById("btn1");
         const user = document.getElementById("message");
+
+        btn1.addEventListener("click", (e) => {
+            e.preventDefault();
+
+            const u_name = username2.value;
+            const roomId = generateRoomId(6);
+            window.location.href = `draw.html?username=${u_name}&room_id=${roomId}`;
+        });
 
         btn2.addEventListener("click", (e) => {
             e.preventDefault();
-            
+
             const u_name = username.value;
             const r_id = room_id.value;
             console.log(u_name, r_id);
-            socket.emit('join_room',u_name, r_id);
-            window.location.href="draw.html";
-        })
-
-        // const form = document.getElementById("room2").addEventListener("submit",(e)=>{
-        //     e.preventDefault();
-        //     const user_name = username.value;
-        //     const room_ID = room_id.value;
-        //     socket.emit("Create_room",user_name,room_ID);
-
-        // }) 
-        // socket.on("User_connected",(username,room_id)=>{
-        //     alert(`you are connected with user name : ${username} room_id: ${room_id}`);
-        // })
-        socket.on("joined_room", (username, room_id) => {
-            // alert(`joined room with username:${username}, room : ${room_id}`);
-            const p = document.createElement('p');
-            p.innerText = username;
-            user.appendChild(p);
+            
+            window.location.href = `draw.html?username=${u_name}&room_id=${r_id}`;
         });
+
     </script>
-   
-    <!-- <script src="script.js"></script> -->
 
 
 </body>
