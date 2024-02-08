@@ -1,96 +1,125 @@
-<!DOCTYPE html>
-<html lang="en">
+const bodyParser = require('body-parser');
+const express = require('express');
+// const { Socket } = require('node:dgram');
+const { createServer } = require('node:http');
+const { join } = require('node:path');
+const { Server } = require('socket.io');
+const randomWord = require('random-word-slugs');
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link href="./css/style.css" rel="stylesheet" </head>
+const app = express();
+const server = createServer(app);
 
-<body>
-    <div class="main">
-        <div class="upper">
+const io = new Server(server);
+// app.use(express.urlencoded());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/css', express.static('css'));
+// app.use(express.static(path.join(__dirname, 'public')));
+
+app.use('/nodejs', express.static(join(__dirname, 'nodejs')));
 
 
-            <h1>The Pictionary Game- Play with Friends</h1>
-            <form action="" id="room">
-                <section class="join">
-                    <h2>Create Room</h2>
-                    <h3>Username</h3>
-                    <input type="text" id="name" placeholder="Enter Your Name"><br>
-                    <button type="submit" class="btn1" id = "btn1">Create Room</button>
-                </section>
+app.get('/', (req, res) => {
+    // console.log(req.params);
+    res.sendFile(join(__dirname, 'index.html'));
+});
+app.get('/draw.html', (req, res) => {
+    res.sendFile(join(__dirname, 'draw.html'));
+});
+// app.post('/join', (req, res) => {
+//     const name = req.body.name2;
+//     const room_id = req.body.room_id;
 
-            </form>
-        </div>
-
-        <hr class="mid">
-        <div class="down">
-            <section class="lower">
-                <h2>Join Room</h2>
-                <form action="/join" method="post" id="room2">
-                    <h3>Username</h3>
-                    <input type="text" id="name2" name="name2" placeholder="Enter Your Name"><br>
-                    <h3>Room Id</h3>
-                    <input type="text" id="room_id" name="room_id" placeholder="Enter Room ID"><br>
-                    <a href="draw.html">
-                        <button type="submit" id="btn2">Join Room</button></a>
-                </form>
-
-            </section>
+//     res.sendFile(join(__dirname, 'draw.html'), {
+//         name: name,
+//         room_id: room_id
+//     });
+// });
 
 
 
-        </div>
-        <div id="message"></div>
-    </div>
 
+io.on('connection', (Socket) => {
+    console.log('server connected');
+    Socket.emit('connected');
+    Socket.on('disconnect', () => {
+        console.log('user disconnected');
+    })
 
+    // Socket.on('Create_room',(username,room_id)=>{
+    // console.log(`Username ${username} , Room Id: ${room_id}`);
+    // io.emit("User_connected",username,room_id);
 
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script>
+    // });
 
-        function generateRoomId(length) {
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let roomId = '';
-            for (let i = 0; i < length; i++) {
-                const randomIndex = Math.floor(Math.random() * characters.length);
-                roomId += characters.charAt(randomIndex);
-            }
-            return roomId;
-        }
-
-        
-
-        const socket = io();
-        const username = document.getElementById("name2");
-        const username2 = document.getElementById("name");
-        const room_id = document.getElementById("room_id");
-        const btn2 = document.getElementById("btn2");
-        const btn1 = document.getElementById("btn1");
-        const user = document.getElementById("message");
-
-        btn1.addEventListener("click", (e) => {
-            e.preventDefault();
-
-            const u_name = username2.value;
-            const roomId = generateRoomId(6);
-            window.location.href = `draw.html?username=${u_name}&room_id=${roomId}`;
+    Socket.on('join_room', (u_name, r_id) => {
+        console.log(u_name);
+        Socket.join(r_id);
+        io.to(r_id).emit("joined_room", {u_name, r_id});
+    });
+    Socket.on('start_game', (room_id) => {
+        io.to(room_id).emit('game_started');
+        startGame(room_id);
+    });
+    Socket.on('send_message', (messageData) => {
+        // Emit message to the specific room
+        // console.log(messageData.txt);
+        io.to(messageData.room_id).emit("receive_message", {
+            username: messageData.username,
+            txt: messageData.txt,
+            room_id: messageData.room_id
         });
-
-        btn2.addEventListener("click", (e) => {
-            e.preventDefault();
-
-            const u_name = username.value;
-            const r_id = room_id.value;
-            console.log(u_name, r_id);
-            
-            window.location.href = `draw.html?username=${u_name}&room_id=${r_id}`;
-        });
-
-    </script>
+    });
+});
 
 
-</body>
+function startGame(room_id) {
+    const word = randomWord;
+    const wordLength = word.length;
 
-</html>
+    // Emit the word and its length to the drawer
+    io.to(room_id).emit('word_to_drawer', { word, wordLength });
+
+    // Get the room
+    const room = io.sockets.adapter.rooms.get(room_id);
+    if (!room) {
+        console.log(`Room ${room_id} doesn't exist.`);
+        return;
+    }
+
+    // Get the sockets in the room
+    const sockets = room.sockets;
+    if (!sockets || sockets.size === 0) {
+        console.log(`Room ${room_id} doesn't have any sockets.`);
+        return;
+    }
+
+    // Set timer for each turn (e.g., 60 seconds)
+    const turnTime = 60000; // 60 seconds
+    const players = Object.keys(sockets);
+
+    let currentPlayerIndex = 0;
+
+    function takeTurn() {
+        const currentPlayerSocketId = players[currentPlayerIndex];
+        const currentPlayerSocket = io.sockets.sockets[currentPlayerSocketId];
+
+        // Emit turn start event to the current player
+        currentPlayerSocket.emit('your_turn', turnTime);
+
+        // Increment current player index for next turn
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+
+        // Set timeout for next turn
+        setTimeout(takeTurn, turnTime);
+    }
+
+    // Start taking turns
+    takeTurn();
+}
+
+const PORT = process.env.PORT || 3000; 
+
+server.listen(PORT, () => {
+    console.log('Server running at port 3000');
+});
+
