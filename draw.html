@@ -21,7 +21,7 @@
             </div>
         </div>
         <div class="center">
-            <div class="word">
+            <div class="word guess">
                 <h3>Word</h3>
             </div>
             <div class="board">
@@ -126,7 +126,6 @@
         })
 
         socket.on("receive_message", (messageData) => {
-            // Display messages sent to the specific room
             const p = document.createElement('p');
             p.innerText = `${messageData.username}: ${messageData.txt}`;
             message.appendChild(p);
@@ -146,24 +145,21 @@
         socket.on('word_to_drawer', ({ word, wordLength }) => {
             document.querySelector('.guess.word').innerText = `Word Length: ${wordLength}`;
             if (username === drawer) {
-                // Display the word to the drawer
                 document.querySelector('.guess.word').innerText = `Your Word: ${word}`;
             }
         });
 
         let drawer = '';
 
-        // socket.on('game_started', () => {
-        //     // Enable the start button only for the host
-        //     const params = new URLSearchParams(window.location.search);
-        //     const isHost = params.get('isHost'); 
-        //     if (isHost === 'true') {
-        //         document.getElementById('start').disabled = false;
-        //     }
-        // });
+        socket.on('game_started', () => {
+            const params = new URLSearchParams(window.location.search);
+            const isHost = params.get('isHost'); 
+            if (isHost === 'true') {
+                document.getElementById('start').disabled = false;
+            }
+        });
 
         socket.on('your_turn', (time) => {
-            // Display timer for the current player's turn
             let timer = time / 1000;
             const timerInterval = setInterval(() => {
                 document.querySelector('.guess.word').innerText = `Your Turn: ${timer}`;
