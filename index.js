@@ -61,8 +61,7 @@ io.on('connection', (Socket) => {
         startGame(room_id);
     });
     Socket.on('send_message', (messageData) => {
-        // Emit message to the specific room
-        // console.log(messageData.txt);
+    
         io.to(messageData.room_id).emit("receive_message", {
             username: messageData.username,
             txt: messageData.txt,
@@ -75,25 +74,25 @@ io.on('connection', (Socket) => {
 function startGame(room_id) {
     const word = randomWord;
     const wordLength = word.length;
+    console.log(word);
+    console.log(wordLength);
 
-    // Emit the word and its length to the drawer
+    
     io.to(room_id).emit('word_to_drawer', { word, wordLength });
 
-    // Get the room
+  
     const room = io.sockets.adapter.rooms.get(room_id);
     if (!room) {
         console.log(`Room ${room_id} doesn't exist.`);
         return;
     }
 
-    // Get the sockets in the room
     const sockets = room.sockets;
     if (!sockets || sockets.size === 0) {
         console.log(`Room ${room_id} doesn't have any sockets.`);
         return;
     }
 
-    // Set timer for each turn (e.g., 60 seconds)
     const turnTime = 60000; // 60 seconds
     const players = Object.keys(sockets);
 
@@ -103,22 +102,19 @@ function startGame(room_id) {
         const currentPlayerSocketId = players[currentPlayerIndex];
         const currentPlayerSocket = io.sockets.sockets[currentPlayerSocketId];
 
-        // Emit turn start event to the current player
         currentPlayerSocket.emit('your_turn', turnTime);
 
-        // Increment current player index for next turn
         currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
 
-        // Set timeout for next turn
         setTimeout(takeTurn, turnTime);
     }
 
-    // Start taking turns
     takeTurn();
 }
 
+const PORT = process.env.PORT || 3000; 
 
-server.listen(3000, () => {
+server.listen(PORT, () => {
     console.log('Server running at port 3000');
 });
 
